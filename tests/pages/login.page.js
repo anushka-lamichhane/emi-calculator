@@ -5,11 +5,15 @@ class LoginPage {
     this.page = page;
 
     this.clickLoginButton = page.getByRole("button", { name: "Login" });
-    this.selectInsydeIdpOption = page.getByRole("button", { name: "Insyde-Corp-IDP" });
+    this.selectInsydeIdpOption = page.getByRole("button", {
+      name: "Insyde-Corp-IDP",
+    });
 
-    this.selectAssistantText = page.getByText("Select an Assistant", { exact: true });
-    this.userProfileButton = page.getByRole('button', { name: 'User' })
-    this.clickOnDocsAdmin = page.getByRole('link', { name: 'Docs Admin' })
+    this.selectAssistantText = page.getByText("Select an Assistant", {
+      exact: true,
+    });
+    this.userProfileButton = page.getByRole("button", { name: "User" });
+    this.clickOnDocsAdmin = page.getByRole("link", { name: "Docs Admin" });
   }
 
   async clickLogin() {

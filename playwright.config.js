@@ -1,31 +1,28 @@
-const { defineConfig } = require('@playwright/test');
+const { defineConfig } = require("@playwright/test");
 
 module.exports = defineConfig({
-
   // Runs ONCE → creates MFA session
-  globalSetup: require.resolve('./auth.setup.js'),
+  globalSetup: require.resolve("./auth.setup.js"),
 
-  testDir: './tests',
+  testDir: "./tests",
 
   timeout: 30 * 1000,
 
   use: {
-    baseURL: 'https://demo.insyde.ai/',
+    baseURL: "https://demo.insyde.ai/",
 
     // ✔ Reuse saved MFA session
-    storageState: 'storageState.json',
+    storageState: "storageState.json",
 
     // ✔ Needed for Microsoft redirects
     ignoreHTTPSErrors: true,
 
     headless: false,
 
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    trace: 'on-first-retry',
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
+    trace: "on-first-retry",
   },
 
-  reporter: [
-    ['html', { open: 'never' }]
-  ],
+  reporter: [["html", { open: "never" }]],
 });
