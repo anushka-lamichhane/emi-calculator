@@ -1,38 +1,150 @@
 const { chromium } = require("@playwright/test");
+const fs = require("fs");
+const constants = require("./config/constants");
 
-module.exports = async () => {
-  const browser = await chromium.launch({ headless: false });
+function isStorageStateValid() {
+  const storageStatePath = constants.paths.storageState;
 
-  // IMPORTANT: allow cross-domain cookies
+  if (!fs.existsSync(storageStatePath)) {
+    return false;
+  }
+
+  try {
+    const storageState = JSON.parse(fs.readFileSync(storageStatePath, "utf8"));
+
+    if (!storageState.cookies || storageState.cookies.length === 0) {
+      return false;
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const hasValidSessionCookie = storageState.cookies.some((cookie) => {
+      if (
+        cookie.name === "next-auth.session-token.0" ||
+        cookie.name === "next-auth.session-token.1"
+      ) {
+        if (cookie.expires === -1) {
+          return true;
+        }
+        return cookie.expires > now;
+      }
+      return false;
+    });
+
+    return hasValidSessionCookie;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function validateExistingSession() {
+  const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
+    storageState: constants.paths.storageState,
     ignoreHTTPSErrors: true,
-    recordHar: { path: "login.har" }, // optional but helps diagnostics
   });
-
   const page = await context.newPage();
 
-  console.log("🔐 Opening site...");
-  await page.goto("https://demo.insyde.ai/", { waitUntil: "networkidle" });
+  try {
+    await page.goto(constants.urls.baseUrl, {
+      waitUntil: "domcontentloaded",
+      timeout: 30000,
+    });
 
-  console.log("➡️ Clicking Login...");
-  await page.getByRole("button", { name: "Login" }).click();
+    await page.waitForTimeout(2000);
 
-  console.log("🏢 Selecting Corporate IDP...");
-  await page.getByRole("button", { name: "Insyde-Corp-IDP" }).click();
+    const currentUrl = page.url();
+    const isAuthenticated =
+      constants.urls.dashboard.test(currentUrl) ||
+      !constants.urls.microsoftLogin.test(currentUrl);
 
-  // Wait for Microsoft login
-  await page.waitForURL(/login\.microsoftonline\.com/, { timeout: 120000 });
-  console.log("✍️ Complete login + MFA manually");
+    await browser.close();
+    return isAuthenticated;
+  } catch (error) {
+    await browser.close();
+    return false;
+  }
+}
 
-  // Wait until user completes everything and reaches dashboard
-  await page.waitForURL(/assistant=asst_/, { timeout: 180000 });
-  console.log("🎉 Back to dashboard");
+async function performLogin() {
+  const browser = await chromium.launch({ headless: false });
+  const context = await browser.newContext({
+    ignoreHTTPSErrors: true,
+    recordHar: { path: constants.paths.harFile },
+  });
+  const page = await context.newPage();
 
-  // CRITICAL — wait for background SSO token exchanges to complete
-  await page.waitForLoadState("networkidle");
+  try {
+    console.log("Opening site...");
+    await page.goto(constants.urls.baseUrl, {
+      waitUntil: constants.waitOptions.networkIdle,
+    });
 
-  console.log("💾 Saving storageState...");
-  await context.storageState({ path: "storageState.json" });
+    console.log("Clicking Login...");
+    await page
+      .getByRole(constants.selectors.loginButton.role, {
+        name: constants.selectors.loginButton.name,
+      })
+      .click();
 
-  await browser.close();
+    console.log("Selecting Corporate IDP...");
+    await page
+      .getByRole(constants.selectors.insydeIdpButton.role, {
+        name: constants.selectors.insydeIdpButton.name,
+      })
+      .click();
+
+    await page.waitForURL(constants.urls.microsoftLogin, {
+      timeout: constants.timeouts.microsoftLogin,
+    });
+    console.log("Complete login + MFA manually");
+
+    await page.waitForURL(constants.urls.dashboard, {
+      timeout: constants.timeouts.dashboardLoad,
+    });
+    console.log("Back to dashboard");
+
+    await page.waitForLoadState(constants.waitOptions.networkIdle);
+
+    console.log("Saving storageState...");
+    await context.storageState({ path: constants.paths.storageState });
+    console.log("Authentication state saved successfully");
+  } catch (error) {
+    console.error("Authentication setup failed:", error.message);
+    throw error;
+  } finally {
+    await browser.close();
+  }
+}
+
+const authSetup = async (forceReauth = false) => {
+  if (forceReauth) {
+    console.log("Force re-authentication requested, performing login...");
+    await performLogin();
+    return;
+  }
+
+  if (isStorageStateValid()) {
+    console.log("Found existing storageState.json, validating session...");
+    const isValid = await validateExistingSession();
+
+    if (isValid) {
+      console.log("Existing session is valid, skipping login");
+      return;
+    } else {
+      console.log("Existing session is invalid, performing new login...");
+    }
+  } else {
+    console.log("No valid storageState.json found, performing login...");
+  }
+
+  await performLogin();
 };
+
+if (require.main === module) {
+  authSetup(true).catch((error) => {
+    console.error("Error:", error);
+    process.exit(1);
+  });
+}
+
+module.exports = authSetup;

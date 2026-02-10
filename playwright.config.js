@@ -1,28 +1,24 @@
 const { defineConfig } = require("@playwright/test");
+const constants = require("./config/constants");
 
 module.exports = defineConfig({
-  // Runs ONCE → creates MFA session
   globalSetup: require.resolve("./auth.setup.js"),
-
   testDir: "./tests",
-
-  timeout: 30 * 1000,
-
+  timeout: constants.timeouts.test,
   use: {
-    baseURL: "https://demo.insyde.ai/",
-
-    // ✔ Reuse saved MFA session
-    storageState: "storageState.json",
-
-    // ✔ Needed for Microsoft redirects
+    baseURL: constants.urls.baseUrl,
+    storageState: constants.paths.storageState,
     ignoreHTTPSErrors: true,
-
-    headless: false,
-
+    headless: process.env.HEADLESS !== "false",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
     trace: "on-first-retry",
   },
-
   reporter: [["html", { open: "never" }]],
+  projects: [
+    {
+      name: "chromium",
+      use: { ...require("@playwright/test").devices["Desktop Chrome"] },
+    },
+  ],
 });

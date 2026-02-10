@@ -1,38 +1,53 @@
 const { expect } = require("@playwright/test");
+const constants = require("../../config/constants");
 
 class LoginPage {
   constructor(page) {
     this.page = page;
-
-    this.clickLoginButton = page.getByRole("button", { name: "Login" });
-    this.selectInsydeIdpOption = page.getByRole("button", {
-      name: "Insyde-Corp-IDP",
-    });
-
-    this.selectAssistantText = page.getByText("Select an Assistant", {
-      exact: true,
-    });
-    this.userProfileButton = page.getByRole("button", { name: "User" });
-    this.clickOnDocsAdmin = page.getByRole("link", { name: "Docs Admin" });
+    this.selectors = constants.selectors;
   }
 
   async clickLogin() {
-    await this.clickLoginButton.click();
+    const loginButton = this.page.getByRole(this.selectors.loginButton.role, {
+      name: this.selectors.loginButton.name,
+    });
+    await loginButton.click();
   }
 
   async selectInsydeIdp() {
-    await this.selectInsydeIdpOption.click();
+    const idpButton = this.page.getByRole(this.selectors.insydeIdpButton.role, {
+      name: this.selectors.insydeIdpButton.name,
+    });
+    await idpButton.click();
   }
 
   async verifyAssistantHomePageLoaded() {
-    await expect(this.selectAssistantText).toBeVisible();
-    await expect(this.userProfileButton).toBeVisible();
+    const assistantText = this.page.getByText(
+      this.selectors.selectAssistantText.text,
+      { exact: this.selectors.selectAssistantText.exact }
+    );
+    const userProfile = this.page.getByRole(
+      this.selectors.userProfileButton.role,
+      { name: this.selectors.userProfileButton.name }
+    );
+
+    await expect(assistantText).toBeVisible();
+    await expect(userProfile).toBeVisible();
   }
 
   async goToDocsAdmin() {
-    await this.userProfileButton.click();
-    await expect(this.clickOnDocsAdmin).toBeVisible();
-    await this.clickOnDocsAdmin.click();
+    const userProfile = this.page.getByRole(
+      this.selectors.userProfileButton.role,
+      { name: this.selectors.userProfileButton.name }
+    );
+    await userProfile.click();
+
+    const docsAdminLink = this.page.getByRole(
+      this.selectors.docsAdminLink.role,
+      { name: this.selectors.docsAdminLink.name }
+    );
+    await expect(docsAdminLink).toBeVisible();
+    await docsAdminLink.click();
   }
 }
 

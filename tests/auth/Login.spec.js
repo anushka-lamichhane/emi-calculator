@@ -1,27 +1,22 @@
 const { test, expect } = require("@playwright/test");
-const { LoginPage } = require("../pages/login.page.js");
+const { LoginPage } = require("../pages/login.page");
+const constants = require("../../config/constants");
 
 test.describe("Authenticated User Tests", () => {
-  let login;
+  let loginPage;
 
   test.beforeEach(async ({ page }) => {
-    login = new LoginPage(page);
-
-    // Go to app (already authenticated via storageState)
+    loginPage = new LoginPage(page);
     await page.goto("/");
-
-    // Make sure we are not redirected to Microsoft login
-    await expect(page).not.toHaveURL(/login\.microsoftonline\.com/);
-
-    // Confirm dashboard loaded
-    await expect(page).toHaveURL(/assistant=asst_/);
+    await expect(page).not.toHaveURL(constants.urls.microsoftLogin);
+    await expect(page).toHaveURL(constants.urls.dashboard);
   });
 
   test("Verify main dashboard UI elements", async () => {
-    await login.verifyAssistantHomePageLoaded();
+    await loginPage.verifyAssistantHomePageLoaded();
   });
 
-  test("User can navigate to Doc Admin section", async ({ page }) => {
-    await login.goToDocsAdmin();
+  test("User can navigate to Doc Admin section", async () => {
+    await loginPage.goToDocsAdmin();
   });
 });

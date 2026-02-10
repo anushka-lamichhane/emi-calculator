@@ -7,3 +7,13 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 .env
+
+# Authentication state (contains sensitive data)
+storageState.json
+
+# HAR files (may contain sensitive data)
+*.har
+
+# macOS
+.DS_Store
+**/.DS_Store
