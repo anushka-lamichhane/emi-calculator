@@ -1,273 +1,170 @@
-# Insyde QA Automation
+# EMI Calculator Automation (Playwright)
 
-Playwright test automation project for testing the Insyde AI demo application.
+This project contains end-to-end test automation for the **EMI Calculator web application** using **Playwright (JavaScript)**.
+
+The automation validates EMI calculations, UI elements, chart and table data consistency, and Excel download functionality.
+
+---
+
+## 🚀 Tech Stack
+
+- Playwright
+- Node.js
+- JavaScript
+- XLSX (for Excel validation)
+
+---
 
 ## 📋 Prerequisites
 
-- **Node.js**: 18 or higher (recommended: 20)
-- **npm**: Comes with Node.js
-- **System Dependencies**: Required for Playwright browsers (see below)
+- Node.js (v18 or above)
+- npm (comes with Node.js)
 
-### Install System Dependencies (Linux)
+---
 
-On Ubuntu/Debian systems, install the required system libraries:
+## ⚙️ Setup
 
-```bash
-sudo npx playwright install-deps
-```
-
-Or manually install:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y \
-    libnss3 \
-    libnspr4 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdrm2 \
-    libdbus-1-3 \
-    libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    libgbm1 \
-    libasound2 \
-    libpango-1.0-0 \
-    libcairo2 \
-    libatspi2.0-0 \
-    libxshmfence1 \
-    libgstcodecparsers-1.0-0 \
-    libflite1 \
-    libavif13 \
-    libx264-163
-```
-
-**Note**: If you see missing library errors, run `sudo npx playwright install-deps` which will install all required dependencies automatically.
-
-## 🚀 Quick Start
-
-### 1. Install Node.js Dependencies
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Install System Dependencies (Linux only)
-
-```bash
-sudo npx playwright install-deps
-```
-
-### 3. Install Playwright Browsers
+### 2. Install Playwright browsers
 
 ```bash
 npx playwright install
 ```
 
-Or install only Chromium:
-
-```bash
-npx playwright install chromium
-```
-
-### 4. Set Up Authentication
-
-The authentication setup runs automatically before tests. However, you can run it manually:
-
-```bash
-npm run auth:setup
-```
-
-**Note**: This will open a browser window where you need to:
-
-1. Complete Microsoft SSO login
-2. Complete MFA (Multi-Factor Authentication)
-3. Wait for the dashboard to load
-
-The authentication state will be saved to `storageState.json` for reuse in subsequent test runs.
+---
 
 ## 🧪 Running Tests
 
-### Run All Tests (Headless)
+### Run all tests (headless)
 
 ```bash
-npm test
+npx playwright test
 ```
 
-### Run Tests with UI Mode
+### Run in headed mode (see browser)
 
 ```bash
-npm run test:ui
+npx playwright test --headed
 ```
 
-### Run Tests in Headed Mode (See Browser)
+### Run a specific test file
 
 ```bash
-npm run test:headed
+npx playwright test tests/emiCalculator.spec.js
 ```
 
-### Run Tests in Debug Mode
+### View HTML report
 
 ```bash
-npm run test:debug
+npx playwright show-report
 ```
 
-### Run Specific Test Suite
-
-```bash
-npm run test:auth
-```
-
-### Run a Specific Test File
-
-```bash
-npx playwright test tests/auth/Login.spec.js
-```
-
-### Run Tests Matching a Pattern
-
-```bash
-npx playwright test -g "Verify main dashboard"
-```
-
-### View Test Report
-
-```bash
-npm run report
-```
+---
 
 ## 📁 Project Structure
 
 ```
-├── auth.setup.js          # Global authentication setup
-├── playwright.config.js   # Playwright configuration
-├── storageState.json      # Saved authentication state (auto-generated)
 ├── tests/
-│   ├── auth/
-│   │   └── Login.spec.js  # Test suite
-│   ├── data/
-│   │   └── loginData.js   # Test data
-│   └── pages/
-│       └── login.page.js  # Page Object Model
-└── package.json
+│   └── emiCalculator.spec.js     # Test cases
+├── pages/
+│   └── emiCalculator.page.js     # Page Object Model
+├── utils/                        # Utility functions
+├── playwright.config.js          # Playwright configuration
+├── package.json
 ```
 
-## 🔧 Configuration
+---
 
-### Base URL
+## ✅ Test Coverage
 
-The base URL is configured in `playwright.config.js`:
+### 1. EMI Calculation Validation
+- Captures loan amount, interest rate, and tenure from UI
+- Recalculates EMI using formula
+- Compares UI EMI with calculated EMI
 
-- Default: `https://demo.insyde.ai/`
+### 2. Slider Functionality
+- Updates loan values using sliders
+- Verifies updated values reflect correctly
 
-### Timeouts
+### 3. Chart and Table Validation
+- Extracts data from Highcharts
+- Extracts yearly data from amortization table
+- Validates:
+  - Principal values
+  - Interest values
+  - Balance values
+  - Total payment consistency
+  - Decreasing loan balance over time
 
-- Test timeout: 30 seconds (configurable in `playwright.config.js`)
-- Authentication setup timeouts: 120s (Microsoft login), 180s (dashboard)
+### 4. Excel Download Validation
+- Downloads amortization schedule Excel file
+- Reads file using XLSX library
+- Validates:
+  - Loan amount
+  - Interest rate
+  - Loan tenure
 
-### Test Artifacts
+---
 
-On test failure, the following are automatically captured:
+## 📊 EMI Formula Used
 
-- Screenshots: Saved to `test-results/`
-- Videos: Saved to `test-results/`
-- Traces: Saved to `test-results/`
+```
+EMI = (P × r × (1 + r)^n) / ((1 + r)^n - 1)
+```
 
-## 🔐 Authentication
+Where:
+- P = Loan amount  
+- r = Monthly interest rate  
+- n = Number of months  
 
-This project uses Microsoft SSO with MFA. The authentication flow:
+---
 
-1. Navigate to the application
-2. Click "Login" button
-3. Select "Insyde-Corp-IDP"
-4. Complete Microsoft login (manual)
-5. Complete MFA (manual)
-6. Wait for dashboard to load
-7. Save authentication state to `storageState.json`
+## 🧾 Notes
 
-The saved authentication state is reused for all subsequent test runs, avoiding repeated logins.
+- Currency values are parsed by removing ₹ and commas
+- Minor rounding differences are handled using tolerance
+- Table validation filters only yearly rows
 
-**Note**: The `storageState.json` file contains sensitive cookies and is automatically ignored by git (see `.gitignore`).
+---
 
 ## 🐛 Troubleshooting
 
-### Authentication Fails
+If tests fail:
 
-- Delete `storageState.json` and run `npm run auth:setup` again
-- Ensure you have valid Microsoft credentials
-- Check network connectivity
+1. Check site availability:
+   https://emicalculator.net/
 
-### Tests Timeout
-
-- Increase timeout in `playwright.config.js`
-- Check if the application is accessible
-- Verify network connectivity
-
-### Browsers Not Found
-
+2. Reinstall browsers:
 ```bash
 npx playwright install
 ```
 
-### Missing System Dependencies (Linux)
-
-If you see errors about missing `.so` libraries (e.g., `libgstcodecparsers-1.0.so.0`, `libflite.so.1`, etc.):
-
+3. Run in headed mode:
 ```bash
-sudo npx playwright install-deps
+npx playwright test --headed
 ```
 
-This will install all required system dependencies for Playwright browsers.
+---
 
-### View Test Report
+## 📌 Submission Highlights
 
-```bash
-npm run report
-```
+This project demonstrates:
 
-## 📝 Available Scripts
+- End-to-end automation using Playwright
+- Page Object Model (POM)
+- UI and data validation
+- Chart and table consistency checks
+- Excel file validation
+- Real-world QA automation scenarios
 
-- `npm test` - Run all tests (headless)
-- `npm run test:ui` - Run tests with UI mode
-- `npm run test:headed` - Run tests with visible browser
-- `npm run test:debug` - Run tests in debug mode
-- `npm run test:auth` - Run authentication tests only
-- `npm run report` - View test report
-- `npm run auth:setup` - Manually run authentication setup
-- `npm run prettier` - Format code with Prettier
+---
 
-## 🔍 Test Reports
+## 📚 References
 
-After running tests, view the HTML report:
-
-```bash
-npm run report
-```
-
-The report includes:
-
-- Test results and status
-- Screenshots on failure
-- Videos on failure
-- Traces for debugging
-
-## 📚 Additional Resources
-
-- [Playwright Documentation](https://playwright.dev/)
-- [Playwright Test API](https://playwright.dev/docs/api/class-test)
-
-## 🤝 Contributing
-
-1. Follow the existing Page Object Model pattern
-2. Add new page objects in `tests/pages/`
-3. Add test data in `tests/data/`
-4. Run `npm run prettier` before committing
-
-## ⚠️ Important Notes
-
-- `storageState.json` contains sensitive authentication data - never commit it
-- Authentication state expires after some time - regenerate if tests fail with auth errors
-- The `login.har` file (if generated) may contain sensitive data - it's ignored by git
+- https://playwright.dev/
+- https://emicalculator.net/
